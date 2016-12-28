@@ -9,22 +9,7 @@ from functools import partial
 import consts
 
 
-class Scraper(Thread):
-
-    def __init__(self, name, queue, search_query):
-        Thread.__init__(self)
-        self.articles = []
-        self.queue = queue
-        self.name = name
-
-    def get_articles(self):
-        return self.articles
-
-    def run(self):
-        while True:
-            q = self.queue.get()
-
-articles_queue = Queue.Queue
+articles_queue = Queue.Queue()
 
 def scrape_articles(search_query, page_num):
     try:
@@ -40,15 +25,18 @@ def scrape_articles(search_query, page_num):
                     href = article.attrs[u'data-permalink']
                     title = article.attrs[u'data-sharetitle']
                     articles_queue.put((href, title))
-    except:
-        raise Exception
+    except Exception, e:
+        print e
+        raise e
 
 
 def scrape(search_query, num_threads=consts.NUM_THREADS):
     func = partial(scrape_articles, search_query)
     pool = multiprocessing.Pool(processes=consts.NUM_THREADS)
-    output = pool.map(func, range(consts.NUM_THREADS))
-    print output
+    pool.map(func, range(consts.NUM_THREADS))
+    q = articles_queue
+    for article in iter(articles_queue.get, None):
+        print article
 
 scrape('is')
 
